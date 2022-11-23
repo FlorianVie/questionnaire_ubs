@@ -1,29 +1,87 @@
 ---
 title: "Analyses questionnaire"
-output: html_document
+output:
+  html_document:
+    df_print: paged
 ---
 
 # Analyses descriptives
 
 ```{r}
 library(tidyverse)
+library(rstatix)
+library(ggpubr)
 library(psych)
+library(MVN)
+library(readxl)
+```
+
+
+## Dimensions
+
+```{r}
+wide <- read_excel("data/data.xlsx", sheet = 1) %>% select(-Participant)
+
+long <- read_excel("data/data.xlsx", sheet = 2)
+long$Participant <- as.factor(long$Participant)
+long$Dimension <- as.factor(long$Dimension)
+
+long %>%
+  group_by(Dimension) %>%
+  get_summary_stats(type = "common")
+
 ```
 
 
 ```{r}
-rep <- read.csv2("data/reponses.csv", sep = ",")
-
-rep_dim <- rep %>%
-  pivot_longer(cols = LDS2:INTU1, names_to = "Items", values_to = "Results")
-
-rep
+ggbarplot(long, x = "Dimension", y = "Reponse", add = "mean_se", fill = "grey") + rotate_x_text(45)
 ```
+
+
+## Normalité
+
+```{r}
+ggdensity(long, x = "Reponse", facet.by = c("Item"))
+```
+
+
+### Normalité univariée
+
+```{r}
+mvn(wide)$univariateNormality
+```
+
+### Normalité univariée
+
+```{r}
+mvn(wide)$multivariateNormality
+```
+
+
+# Corrélations
 
 
 ```{r}
+matrice_corr <- wide %>%
+  cor_mat()
 
+matrice_corr
 ```
+
+```{r}
+matrice_corr %>%
+#  cor_reorder() %>%
+  pull_lower_triangle() %>%
+  cor_plot(label = F, method = "square", significant.level = 0.05, insignificant = "blank")
+```
+
+
+
+
+
+
+
+
 
 
 
