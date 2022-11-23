@@ -1,0 +1,40 @@
+---
+title: "Analyses questionnaire"
+output: html_document
+---
+
+# Analyses descriptives
+
+```{r}
+library(tidyverse)
+library(psych)
+```
+
+
+```{r}
+rep <- read.csv2("data/reponses.csv", sep = ",")
+
+rep_dim <- rep %>%
+  pivot_longer(cols = LDS2:INTU1, names_to = "Items", values_to = "Results")
+
+rep
+```
+
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
