@@ -1,0 +1,13 @@
+name: questionnaire_ubs
+title: questionnaire_ubs
+username:
+account: electric-lizard
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 7746125
+bundleId: 6561743
+url: https://electric-lizard.shinyapps.io/questionnaire_ubs/
+when: 1669626700.56491
+lastSyncTime: 1669626700.56492
+asMultiple: FALSE
+asStatic: FALSE
