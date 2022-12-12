@@ -1,0 +1,209 @@
+---
+title: "Analyse en composantes principales"
+output: 
+  html_notebook: 
+    theme: spacelab
+    toc: yes
+    fig_width: 10
+    fig_height: 10
+---
+
+# Préparation de l'analyse
+
+## Packages
+
+```{r}
+library(tidyverse)  # Manipulation des données
+library(readxl)     # Lecture des fichiers Excel
+library(ggpubr)     # Représentations graphiques
+library(rstatix)    # Tests statistiques en langage Dplyr
+library(FactoMineR) # Analyses en composantes principales
+library(factoextra) # Visualisation graphique de l'ACP
+library(gtsummary)  # Résumé descriptif des données
+library(corrplot)
+library(plotly)
+```
+
+
+## Importation des données
+
+```{r}
+data <- read_excel("data/data_ubs.xlsx", sheet = "reponses") %>% select(-ID)
+
+
+head(data)
+```
+
+
+## Résumé descriptif des données
+
+<details>
+<summary>Cliquer pour afficher</summary>
+```{r, echo=FALSE, eval=TRUE}
+data %>%
+  tbl_summary()
+```
+</details> 
+
+
+# Analyse en composantes principales
+
+```{r}
+res.pca <- PCA(data, scale.unit = T, graph = F)
+print(res.pca)
+```
+
+## Valeurs propres & Variances
+
+```{r}
+eig.val <- get_eigenvalue(res.pca)
+head(eig.val, 30)
+```
+
+La proportion de variance expliquée par chaque valeur propre est donnée dans la deuxième colonne.
+
+Une valeur propre > 1 indique que la composante principale (PC) concernée représente plus de variance par rapport à une seule variable d’origine, lorsque les données sont standardisées.
+
+
+
+```{r}
+fviz_eig(res.pca, addlabels = TRUE)
+```
+
+
+## Cercle des corrélations
+
+```{r}
+fviz_pca_var(res.pca, col.var = "black", repel = T, alpha.var = 1)
+```
+
+## Qualité de représentation
+
+```{r}
+fviz_cos2(res.pca, choice = "var", axes = 1:2)
+```
+
+
+
+Un cos2 élevé indique une bonne représentation de la variable sur les axes principaux en considération. 
+
+Un faible cos2 indique que la variable n’est pas parfaitement représentée par les axes principaux. 
+
+
+
+## Contributions des variables aux axes
+
+```{r}
+fviz_contrib(res.pca, choice = "var", axes = 1, top = 40)
+fviz_contrib(res.pca, choice = "var", axes = 2, top = 40)
+```
+
+La ligne en pointillé rouge, sur le graphique ci-dessus, indique la contribution moyenne attendue.
+
+
+
+
+## Individus
+
+```{r}
+var <- get_pca_var(res.pca)
+res.pca$ind.sup
+
+p <- fviz_pca_ind(res.pca, col.ind.sup = "blue", label  =F)
+p
+```
+
+
+
+
+# Clustering
+
+## Identification du nombre optimal de clusters
+
+```{r}
+fviz_nbclust(data, FUNcluster =factoextra::hcut, method = "gap_stat",hc_method = "average", hc_metric = "euclidean", stand = TRUE)
+
+library(NbClust)
+NbClust(data, distance = "euclidean", method = "average")
+```
+
+
+
+L'analyse recommande l'usage de **6 clusters**
+
+
+## Clusters
+
+### Avec 6 clusters
+
+```{r}
+res.km <- kmeans(scale(data), 6, nstart = 25)
+print(res.km)
+
+clust6p <- fviz_cluster(res.km, data = scale(data), 
+             geom = "point",
+             ellipse.type = "convex", 
+             ggtheme = theme_bw()
+             )
+ggplotly(clust6p)
+
+```
+
+```{r}
+data$clust6 <- res.km$cluster
+data$clust6 <- as.factor(data$clust6)
+
+data6c <- data %>%
+  group_by(clust6) %>%
+  summarise_if(is.numeric, mean)
+
+data6cw <- data6c %>%
+  pivot_longer(cols = -clust6, names_to = "Item", values_to = "Value")
+
+data6cw
+
+clust6mp <- ggbarplot(data6cw, x = "clust6", y = "Value", facet.by = "Item", fill = "clust6")
+ggplotly(clust6mp, width = 800, height = 800)
+
+```
+
+
+
+
+### Avec 2 clusters
+
+```{r}
+res.km2 <- kmeans(scale(data %>% select(-clust6)), 2, nstart = 25)
+print(res.km2)
+
+clust6p <- fviz_cluster(res.km2, data = scale(data %>% select(-clust6)), 
+             geom = "point",
+             ellipse.type = "convex", 
+             ggtheme = theme_bw()
+             )
+ggplotly(clust6p)
+
+```
+
+```{r}
+data$clust2 <- res.km2$cluster
+data$clust2 <- as.factor(data$clust2)
+
+data2c <- data %>%
+  group_by(clust2) %>%
+  summarise_if(is.numeric, mean)
+
+data2cw <- data2c %>%
+  pivot_longer(cols = -clust2, names_to = "Item", values_to = "Value")
+
+data2cw
+
+clust2mp <- ggbarplot(data2cw, x = "clust2", y = "Value", facet.by = "Item", fill = "clust2")
+ggplotly(clust2mp, width = 800, height = 800)
+
+```
+
+
+
+
+
