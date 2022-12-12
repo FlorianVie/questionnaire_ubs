@@ -1,0 +1,150 @@
+---
+title: "Analyse en composantes principales"
+output: 
+  html_notebook: 
+    theme: spacelab
+---
+
+# Préparation de l'analyse
+
+## Packages
+
+```{r}
+library(tidyverse)  # Manipulation des données
+library(readxl)     # Lecture des fichiers Excel
+library(ggpubr)     # Représentations graphiques
+library(rstatix)    # Tests statistiques en langage Dplyr
+library(FactoMineR) # Analyses en composantes principales
+library(factoextra) # Visualisation graphique de l'ACP
+library(gtsummary)  # Résumé descriptif des données
+library(corrplot)
+```
+
+
+## Importation des données
+
+```{r}
+data <- read_excel("data/data_ubs.xlsx", sheet = "data")
+
+dataDrop <- data %>%
+  select(-INTU1, 
+         -LDS1,
+         -NSUB6.1,
+         -NSUB6.2,
+         -NSUB6.3,
+         -NSUB6.4,
+         -NSUB6.5,
+         -NSUB6.6,
+         -NSUB6.7,
+         -NSUB6.8,
+         -NSUB6.9,
+         -NSUB6.10,
+         -NSUB6.11,
+         -NSUB6.12,
+         -NSUB6.13)
+
+dataNum <- dataDrop %>% select(where(is.numeric))
+head(data)
+```
+
+
+## Résumé descriptif des données
+
+<details>
+<summary>Cliquer pour afficher</summary>
+```{r, echo=FALSE, eval=TRUE}
+data %>%
+  select(-ID) %>%
+  tbl_summary()
+```
+</details> 
+
+
+# Analyse en composantes principales
+
+```{r}
+res.pca <- PCA(dataNum, scale.unit = T, graph = F)
+print(res.pca)
+```
+
+## Valeurs propres & Variances
+
+```{r}
+eig.val <- get_eigenvalue(res.pca)
+head(eig.val, 30)
+```
+
+La proportion de variance expliquée par chaque valeur propre est donnée dans la deuxième colonne.
+
+Une valeur propre > 1 indique que la composante principale (PC) concernée représente plus de variance par rapport à une seule variable d’origine, lorsque les données sont standardisées.
+
+```{r}
+fviz_eig(res.pca, addlabels = TRUE)
+```
+
+
+## Cercle des corrélations
+
+```{r}
+fviz_pca_var(res.pca, col.var = "black", repel = T, alpha.var = 1)
+```
+
+## Qualité de représentation
+
+```{r}
+fviz_cos2(res.pca, choice = "var", axes = 1:2)
+```
+
+
+
+Un cos2 élevé indique une bonne représentation de la variable sur les axes principaux en considération. 
+
+Un faible cos2 indique que la variable n’est pas parfaitement représentée par les axes principaux. 
+
+
+
+## Contributions des variables aux axes
+
+```{r}
+fviz_contrib(res.pca, choice = "var", axes = 1, top = 40)
+fviz_contrib(res.pca, choice = "var", axes = 2, top = 40)
+```
+
+La ligne en pointillé rouge, sur le graphique ci-dessus, indique la contribution moyenne attendue.
+
+
+
+
+## Individus
+
+```{r}
+var <- get_pca_var(res.pca)
+res.pca$ind.sup
+
+p <- fviz_pca_ind(res.pca, col.ind.sup = "blue", repel = TRUE)
+p
+```
+
+
+
+
+# Clustering
+
+Perte des individus n'ayant pas répondu à toutes les variables
+
+```{r}
+res.km <- kmeans(scale(dataNum %>% drop_na), 3, nstart = 25)
+
+fviz_cluster(res.km, data = scale(dataNum %>% drop_na),
+             palette = c("#2E9FDF", "#00AFBB", "#E7B800"), 
+             geom = "point",
+             ellipse.type = "convex", 
+             ggtheme = theme_bw()
+             )
+```
+
+
+
+
+
+
