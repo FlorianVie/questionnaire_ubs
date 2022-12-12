@@ -13,7 +13,7 @@ output:
 library(tidyverse)  # Manipulation des données
 library(readxl)     # Lecture des fichiers Excel
 library(ggpubr)     # Représentations graphiques
-library(rstatix)    # Tests statistiques en langage Dplyr
+library(rstatix)    # Tests statistiques en langage Dplyr 
 library(FactoMineR) # Analyses en composantes principales
 library(factoextra) # Visualisation graphique de l'ACP
 library(gtsummary)  # Résumé descriptif des données

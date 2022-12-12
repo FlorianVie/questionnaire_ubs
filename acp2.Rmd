@@ -176,12 +176,12 @@ ggplotly(clust6mp, width = 800, height = 800)
 res.km2 <- kmeans(scale(data %>% select(-clust6)), 2, nstart = 25)
 print(res.km2)
 
-clust6p <- fviz_cluster(res.km2, data = scale(data %>% select(-clust6)), 
+clust2p <- fviz_cluster(res.km2, data = scale(data %>% select(-clust6)), 
              geom = "point",
              ellipse.type = "convex", 
              ggtheme = theme_bw()
              )
-ggplotly(clust6p)
+ggplotly(clust2p, width = 800, height = 800)
 
 ```
 
