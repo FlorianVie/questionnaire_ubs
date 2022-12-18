@@ -1,0 +1,184 @@
+---
+title: "Analyse Factorielle Multiple"
+output: 
+  html_notebook: 
+    toc: yes
+---
+
+L'analyse factorielle multiple (AFM) est une technique de traitement et de visualisation des données multidimensionnelles qui a pour objectif de réduire la dimensionnalité d'un ensemble de données tout en conservant le maximum d'informations. Elle est similaire à l'analyse en composantes principales (ACP), mais elle est plus flexible et permet de prendre en compte des hypothèses sur les relations entre les variables.
+
+Comme pour l'ACP, l'AFM consiste à trouver de nouvelles variables, appelées "facteurs", qui sont des combinaisons linéaires des variables originales. Ces facteurs sont choisis de sorte qu'ils expliquent le maximum de variance possible dans les données. Toutefois, contrairement à l'ACP, l'AFM permet de spécifier des hypothèses sur les relations entre les variables, par exemple en imposant que certains facteurs soient corrélés entre eux.
+
+L'AFM est souvent utilisée lorsque l'on veut comprendre les relations de causalité entre les variables et lorsqu'on veut créer des indices composites à partir de plusieurs variables. Elle est également utilisée en prétraitement de données avant de les utiliser dans un modèle de prédiction ou de classification.
+
+```{r}
+library(tidyverse)  # Manipulation des données
+library(readxl)     # Lecture des fichiers Excel
+library(ggpubr)     # Représentations graphiques
+library(rstatix)    # Tests statistiques en langage Dplyr
+library(FactoMineR) # Analyses en composantes principales
+library(factoextra) # Visualisation graphique de l'ACP
+library(gtsummary)  # Résumé descriptif des données
+library(corrplot)   # Corrélogrammes
+library(plotly)     # Graphes intéractifs
+```
+
+
+# Avec les données complètes 
+
+```{r}
+data <- read_excel("data/data_ubs.xlsx", sheet = "data_afm")
+data$ID <- as.factor(data$ID)
+data$Pays <- as.factor(data$Pays)
+data$Poste <- as.factor(data$Poste)
+data$Region <- as.factor(data$Region)
+data$Experience <- as.factor(data$Experience)
+data$Age <- as.factor(data$Age)
+data$Sexe <- as.factor(data$Sexe)
+data$Experience <- as.factor(data$Experience)
+data$Type <- as.factor(data$Type)
+
+data <- data %>%
+  select(-C2, -C3, -C4.1,	-C4.2, -C4.3, -C4.4, -C4.5, -C4.6, -C4.7, -C4.8, -C4.9, -Type, -Pays)
+
+data <- column_to_rownames(data, "ID")
+
+dataComp <- data %>%
+  drop_na()
+
+dataComp
+```
+
+
+```{r}
+res.mfa <- MFA(dataComp, 
+               group = c(1, 1, 1, 1, 1, 4, 6, 8, 4, 1, 6, 9, 5),
+               type = c("n", "n", "n", "n", "n", "s", "s", "s", "s", "s", "s", "s", "s"),
+               name.group = c("Poste", "Region", "Experience", "Age", "Sexe", "AFE", "AFP", "CF", "IEIP", "INTU", "LDS", "MOT", "NSUB"),
+               graph = F
+               )
+
+print(res.mfa)
+```
+
+
+## Valeurs propres
+
+La valeur propre est une mesure de l'importance d'un facteur. Elle correspond au rapport entre la variance expliquée par le facteur et la variance totale des données. Plus la valeur propre d'un facteur est élevée, plus le facteur explique de variance dans les données et donc plus il est important.
+
+Les valeurs propres sont généralement présentées sous forme de pourcentage, de manière à ce qu'elles puissent être comparées entre elles. Par exemple, si le premier facteur explique 40% de la variance totale des données et que le second facteur explique 20% de la variance, on peut dire que le premier facteur est deux fois plus important que le second.
+
+```{r}
+eig.val <- get_eigenvalue(res.mfa)
+head(eig.val, 20)
+fviz_screeplot(res.mfa)
+```
+
+## Contribution aux dimensions
+
+```{r}
+group <- get_mfa_var(res.mfa, "group")
+group
+
+fviz_mfa_var(res.mfa, "group")
+```
+
+Le graphique ci-dessus illustre la corrélation entre les groupes et les dimensions.
+
+
+```{r}
+# Contribution à la première dimension
+fviz_contrib(res.mfa, "group", axes = 1)
+
+# Contribution à la deuxième dimension
+fviz_contrib(res.mfa, "group", axes = 2)
+```
+
+
+### Variables quantitatives
+
+```{r}
+quanti.var <- get_mfa_var(res.mfa, "quanti.var")
+
+fviz_mfa_var(res.mfa, "quanti.var", repel = T)
+
+fviz_mfa_var(res.mfa, "quanti.var", repel = T, geom = c("point", "text"), legend = "bottom")
+```
+
+```{r}
+fviz_contrib (res.mfa, choice = "quanti.var", axes = 1, top = 20)
+
+fviz_contrib (res.mfa, choice = "quanti.var", axes = 2, top = 20)
+```
+
+## Individus
+
+### Contribution
+
+```{r}
+ind <- get_mfa_ind(res.mfa)
+
+fviz_mfa_ind(res.mfa, col.ind = "cos2", 
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = T)
+```
+
+### Sexe
+
+```{r}
+fviz_mfa_ind(res.mfa, 
+             habillage = "Sexe", # color by groups
+             addEllipses = TRUE, ellipse.type = "confidence", 
+             repel = TRUE 
+             ) 
+```
+
+### Poste
+
+```{r}
+fviz_mfa_ind(res.mfa, 
+             habillage = "Poste", # color by groups
+             addEllipses = TRUE, ellipse.type = "confidence", 
+             repel = TRUE 
+             ) 
+```
+
+
+### Région
+
+```{r}
+fviz_mfa_ind(res.mfa, 
+             habillage = "Region", # color by groups
+             addEllipses = TRUE, ellipse.type = "confidence", 
+             repel = TRUE 
+             ) 
+```
+
+### Expérience
+
+```{r}
+fviz_mfa_ind(res.mfa, 
+             habillage = "Experience", # color by groups
+             addEllipses = TRUE, ellipse.type = "confidence", 
+             repel = TRUE 
+             ) 
+```
+
+### Age
+
+```{r}
+fviz_mfa_ind(res.mfa, 
+             habillage = "Age", # color by groups
+             addEllipses = TRUE, ellipse.type = "confidence", 
+             repel = TRUE 
+             ) 
+```
+
+
+
+
+
+
+
+
+
