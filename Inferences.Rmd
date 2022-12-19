@@ -1,0 +1,53 @@
+---
+title: "Inférences"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)  # Manipulation des données
+library(readxl)     # Lecture des fichiers Excel
+library(ggpubr)     # Représentations graphiques
+library(rstatix)    # Tests statistiques en langage Dplyr
+library(gtsummary)  # Résumé descriptif des données
+library(corrplot)   # Corrélogrammes
+library(plotly)     # Graphes intéractifs
+```
+
+
+```{r}
+data <- read_excel("data/data_ubs.xlsx", sheet = "data_afm")
+data$ID <- as.factor(data$ID)
+data$Pays <- as.factor(data$Pays)
+data$Poste <- as.factor(data$Poste)
+data$Region <- as.factor(data$Region)
+data$Experience <- as.factor(data$Experience)
+data$Age <- as.factor(data$Age)
+data$Sexe <- as.factor(data$Sexe)
+data$Experience <- as.factor(data$Experience)
+data$Type <- as.factor(data$Type)
+
+data <- data %>%
+  select(-C2, -C3, -C4.1,	-C4.2, -C4.3, -C4.4, -C4.5, -C4.6, -C4.7, -C4.8, -C4.9, -Type, -Pays, -Sexe)
+
+#data <- column_to_rownames(data, "ID")
+
+dataComp <- data %>%
+  drop_na()
+
+dataComp
+```
+
+
+```{r}
+data %>%
+  anova_test(INTU1 ~ Age * Poste * Region)
+```
+
+
+
+
+
+
+
+
+

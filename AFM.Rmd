@@ -39,7 +39,7 @@ data$Experience <- as.factor(data$Experience)
 data$Type <- as.factor(data$Type)
 
 data <- data %>%
-  select(-C2, -C3, -C4.1,	-C4.2, -C4.3, -C4.4, -C4.5, -C4.6, -C4.7, -C4.8, -C4.9, -Type, -Pays)
+  select(-C2, -C3, -C4.1,	-C4.2, -C4.3, -C4.4, -C4.5, -C4.6, -C4.7, -C4.8, -C4.9, -Type, -Pays, -Sexe)
 
 data <- column_to_rownames(data, "ID")
 
@@ -50,11 +50,37 @@ dataComp
 ```
 
 
+## Corrélations
+
+```{r}
+dataComp %>%
+  select(where(is.numeric)) %>%
+  cor_mat() %>%
+  cor_plot(method = "square", type = "lower", insignificant = "blank")
+```
+
+
+Le manque de corrélations entre les variables peut déjà nous indiquer que l'ensemble des données ne pourra pas expliquer une grande partie de la variance. De plus, les dimensions de l'analyses ne pourront pas représenter les variables dans leur entièreté.
+
+
+
+```{r}
+dataComp %>%
+  select(where(is.numeric)) %>%
+  cor_mat() %>%
+  cor_plot(method = "square", type = "lower", insignificant = "blank")
+```
+
+
+
+# MFA
+
+
 ```{r}
 res.mfa <- MFA(dataComp, 
-               group = c(1, 1, 1, 1, 1, 4, 6, 8, 4, 1, 6, 9, 5),
-               type = c("n", "n", "n", "n", "n", "s", "s", "s", "s", "s", "s", "s", "s"),
-               name.group = c("Poste", "Region", "Experience", "Age", "Sexe", "AFE", "AFP", "CF", "IEIP", "INTU", "LDS", "MOT", "NSUB"),
+               group = c(1, 1, 1, 1, 4, 6, 8, 4, 1, 6, 9, 5),
+               type = c("n", "n", "n", "n", "s", "s", "s", "s", "s", "s", "s", "s"),
+               name.group = c("Poste", "Region", "Experience", "Age", "AFE", "AFP", "CF", "IEIP", "INTU", "LDS", "MOT", "NSUB"),
                graph = F
                )
 
@@ -66,7 +92,7 @@ print(res.mfa)
 
 La valeur propre est une mesure de l'importance d'un facteur. Elle correspond au rapport entre la variance expliquée par le facteur et la variance totale des données. Plus la valeur propre d'un facteur est élevée, plus le facteur explique de variance dans les données et donc plus il est important.
 
-Les valeurs propres sont généralement présentées sous forme de pourcentage, de manière à ce qu'elles puissent être comparées entre elles. Par exemple, si le premier facteur explique 40% de la variance totale des données et que le second facteur explique 20% de la variance, on peut dire que le premier facteur est deux fois plus important que le second.
+Les valeurs propres sont généralement présentées sous forme de pourcentage, de manière à ce qu'elles puissent être comparées entre elles. *Par exemple, si le premier facteur explique 40% de la variance totale des données et que le second facteur explique 20% de la variance, on peut dire que le premier facteur est deux fois plus important que le second.*
 
 ```{r}
 eig.val <- get_eigenvalue(res.mfa)
@@ -74,16 +100,25 @@ head(eig.val, 20)
 fviz_screeplot(res.mfa)
 ```
 
+Le jeu de données **n'explique que très peu de variance**. Il faudrait pas moins de 18 dimensions pour expliquer 70% de la variance. Les analyses qui suivront ne pourront d'être interprétées comme expliquant **seulement 18% de la variance**.
+
 ## Contribution aux dimensions
 
 ```{r}
 group <- get_mfa_var(res.mfa, "group")
-group
 
 fviz_mfa_var(res.mfa, "group")
 ```
 
 Le graphique ci-dessus illustre la corrélation entre les groupes et les dimensions.
+
+Nous pouvons remarquer que la dimension 2 représentée par l'axe des ordonnées est constitué des variables catégorielles tandis que la dimension 1 en abscisse est formée principalement pour les variables suivantes :
+
+- Motivation
+- Conditions facilitantes
+- Attente face à la performance
+- Intention d'adoption
+- Image espérée et identité
 
 
 ```{r}
@@ -111,6 +146,7 @@ fviz_contrib (res.mfa, choice = "quanti.var", axes = 1, top = 20)
 fviz_contrib (res.mfa, choice = "quanti.var", axes = 2, top = 20)
 ```
 
+
 ## Individus
 
 ### Contribution
@@ -123,17 +159,9 @@ fviz_mfa_ind(res.mfa, col.ind = "cos2",
              repel = T)
 ```
 
-### Sexe
-
-```{r}
-fviz_mfa_ind(res.mfa, 
-             habillage = "Sexe", # color by groups
-             addEllipses = TRUE, ellipse.type = "confidence", 
-             repel = TRUE 
-             ) 
-```
-
 ### Poste
+
+Les ellipses de confiance sont utilisées dans l'analyse en composantes principales (ACP) pour représenter graphiquement l'incertitude associée aux scores des individus sur chaque composante principale. Les ellipses de confiance sont des ellipses qui entourent chaque point de score sur chaque composante principale. Plus l'ellipse est grande, plus l'incertitude est importante pour le score de l'individu sur la composante principale en question.
 
 ```{r}
 fviz_mfa_ind(res.mfa, 
