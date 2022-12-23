@@ -1,0 +1,455 @@
+---
+title: "Analyse Factorielle Exploratoire"
+output: 
+  html_notebook: 
+    toc: yes
+    theme: spacelab
+---
+
+
+
+```{r}
+library(tidyverse)  # Manipulation des données
+library(readxl)     # Lecture des fichiers Excel
+library(ggpubr)     # Représentations graphiques
+library(rstatix)    # Tests statistiques en langage Dplyr
+library(corrplot)   # Corrélogrammes
+library(plotly)     # Graphes intéractifs
+library(psych)
+library(EFAtools)
+library(shiny)
+```
+
+
+# Avec toutes les variables quantitatives {.tabset}
+
+## Données
+
+```{r echo=FALSE}
+data <- read_excel("data/data_ubs.xlsx", sheet = "data_afm")
+data$ID <- as.factor(data$ID)
+data$Pays <- as.factor(data$Pays)
+data$Poste <- as.factor(data$Poste)
+data$Region <- as.factor(data$Region)
+data$Experience <- as.factor(data$Experience)
+data$Age <- as.factor(data$Age)
+data$Sexe <- as.factor(data$Sexe)
+data$Experience <- as.factor(data$Experience)
+data$Type <- as.factor(data$Type)
+
+data <- data %>%
+  select(-C2, -C3, -C4.1,	-C4.2, -C4.3, -C4.4, -C4.5, -C4.6, -C4.7, -C4.8, -C4.9, 
+         -Type, -Pays, -Sexe, 
+         -Region,
+         -Poste,
+         -Experience,
+         -Age,
+         -INTU1)
+
+data <- column_to_rownames(data, "ID")
+
+dataComp <- data %>%
+  drop_na()
+
+dataComp
+```
+
+## Pré-requis
+
+### Bartlett
+
+```{r}
+bartlett.test(dataComp %>% select(where(is.numeric)))
+```
+
+### KMO
+
+```{r}
+KMO(dataComp %>% select(where(is.numeric)))
+```
+
+## Nombre de facteurs
+
+```{r}
+fa.parallel(dataComp, fa="fa", fm="pa")
+```
+
+## Modélisation {.tabset}
+
+### 2 Facteurs {.tabset}
+
+#### Modèle
+
+```{r}
+fit2 <- fa(dataComp, nfactors = 2, rotate = "oblimin", fm = "pa", use = "pairwise")
+
+print(fit2)
+
+```
+
+
+#### Loadings
+
+```{r}
+print(fit2$loadings, sort = T, cutoff = 0.4)
+```
+
+#### Diagramme
+
+```{r}
+fa.diagram(fit2, digits = 2)
+```
+
+### 3 Facteurs {.tabset}
+
+#### Modèle
+
+```{r}
+fit3 <- fa(dataComp, nfactors = 3, rotate = "oblimin", fm = "pa", use = "pairwise")
+
+print(fit3)
+
+```
+
+
+#### Loadings
+
+```{r}
+print(fit3$loadings, sort = T, cutoff = 0.4)
+```
+
+#### Diagramme
+
+```{r}
+fa.diagram(fit3, digits = 2)
+```
+
+### 4 Facteurs {.tabset}
+
+#### Modèle
+
+```{r}
+fit4 <- fa(dataComp, nfactors = 4, rotate = "oblimin", fm = "pa", use = "pairwise")
+
+print(fit4)
+
+```
+
+
+#### Loadings
+
+```{r}
+print(fit4$loadings, sort = T, cutoff = 0.4)
+```
+
+#### Diagramme
+
+```{r}
+fa.diagram(fit4, digits = 2)
+```
+
+
+### 5 Facteurs {.tabset}
+
+#### Modèle
+
+```{r}
+fit5 <- fa(dataComp, nfactors = 5, rotate = "oblimin", fm = "pa", use = "pairwise")
+
+print(fit5)
+
+```
+
+
+#### Loadings
+
+```{r}
+print(fit5$loadings, sort = T, cutoff = 0.4)
+```
+
+#### Diagramme
+
+```{r}
+fa.diagram(fit5, digits = 2)
+```
+
+
+### 6 Facteurs {.tabset}
+
+#### Modèle
+
+```{r}
+fit6 <- fa(dataComp, nfactors = 6, rotate = "oblimin", fm = "pa", use = "pairwise")
+
+print(fit6)
+
+```
+
+
+#### Loadings
+
+```{r}
+print(fit6$loadings, sort = T, cutoff = 0.4)
+```
+
+#### Diagramme
+
+```{r}
+fa.diagram(fit6, digits = 2)
+```
+
+
+### 7 Facteurs {.tabset}
+
+#### Modèle
+
+```{r}
+fit7 <- fa(dataComp, nfactors = 7, rotate = "oblimin", fm = "pa", use = "pairwise")
+
+print(fit7)
+
+```
+
+
+#### Loadings
+
+```{r}
+print(fit7$loadings, sort = T, cutoff = 0.4)
+```
+
+#### Diagramme
+
+```{r}
+fa.diagram(fit7, digits = 2)
+```
+
+
+
+
+
+## Fiabilité
+
+```{r}
+alpha(dataComp)
+```
+
+
+
+---
+
+
+# Avec le retrait : AFE, NSUB, LDS {.tabset}
+
+## Données
+
+```{r echo=FALSE}
+data <- read_excel("data/data_ubs.xlsx", sheet = "data_afm")
+data$ID <- as.factor(data$ID)
+data$Pays <- as.factor(data$Pays)
+data$Poste <- as.factor(data$Poste)
+data$Region <- as.factor(data$Region)
+data$Experience <- as.factor(data$Experience)
+data$Age <- as.factor(data$Age)
+data$Sexe <- as.factor(data$Sexe)
+data$Experience <- as.factor(data$Experience)
+data$Type <- as.factor(data$Type)
+
+data <- data %>%
+  select(-C2, -C3, -C4.1,	-C4.2, -C4.3, -C4.4, -C4.5, -C4.6, -C4.7, -C4.8, -C4.9, 
+         -Type, -Pays, -Sexe, 
+         -AFE1, -AFE2, -AFE4, -AFE5,
+         -NSUB1, -NSUB2, -NSUB3, -NSUB4, -NSUB5,
+         -LDS1, -LDS2, -LDS3, -LDS4, -LDS5, -LDS6, 
+         -Region,
+         -Poste,
+         -Experience,
+         -Age, 
+         -INTU1)
+
+data <- column_to_rownames(data, "ID")
+
+dataComp <- data %>%
+  drop_na()
+
+dataComp
+```
+
+## Pré-requis
+
+### Bartlett
+
+```{r}
+bartlett.test(dataComp %>% select(where(is.numeric)))
+```
+
+### KMO
+
+```{r}
+KMO(dataComp %>% select(where(is.numeric)))
+```
+
+## Nombre de facteurs
+
+```{r}
+fa.parallel(dataComp, fa="fa", fm="pa")
+```
+
+## Modélisation {.tabset}
+
+### 2 Facteurs {.tabset}
+
+#### Modèle
+
+```{r}
+fit2 <- fa(dataComp, nfactors = 2, rotate = "oblimin", fm = "pa", use = "pairwise")
+
+print(fit2)
+
+```
+
+
+#### Loadings
+
+```{r}
+print(fit2$loadings, sort = T, cutoff = 0.4)
+```
+
+#### Diagramme
+
+```{r}
+fa.diagram(fit2, digits = 2)
+```
+
+### 3 Facteurs {.tabset}
+
+#### Modèle
+
+```{r}
+fit3 <- fa(dataComp, nfactors = 3, rotate = "oblimin", fm = "pa", use = "pairwise")
+
+print(fit3)
+
+```
+
+
+#### Loadings
+
+```{r}
+print(fit3$loadings, sort = T, cutoff = 0.4)
+```
+
+#### Diagramme
+
+```{r}
+fa.diagram(fit3, digits = 2)
+```
+
+### 4 Facteurs {.tabset}
+
+#### Modèle
+
+```{r}
+fit4 <- fa(dataComp, nfactors = 4, rotate = "oblimin", fm = "pa", use = "pairwise")
+
+print(fit4)
+
+```
+
+
+#### Loadings
+
+```{r}
+print(fit4$loadings, sort = T, cutoff = 0.4)
+```
+
+#### Diagramme
+
+```{r}
+fa.diagram(fit4, digits = 2)
+```
+
+
+### 5 Facteurs {.tabset}
+
+#### Modèle
+
+```{r}
+fit5 <- fa(dataComp, nfactors = 5, rotate = "oblimin", fm = "pa", use = "pairwise")
+
+print(fit5)
+
+```
+
+
+#### Loadings
+
+```{r}
+print(fit5$loadings, sort = T, cutoff = 0.4)
+```
+
+#### Diagramme
+
+```{r}
+fa.diagram(fit5, digits = 2)
+```
+
+
+### 6 Facteurs {.tabset}
+
+#### Modèle
+
+```{r}
+fit6 <- fa(dataComp, nfactors = 6, rotate = "oblimin", fm = "pa", use = "pairwise")
+
+print(fit6)
+
+```
+
+
+#### Loadings
+
+```{r}
+print(fit6$loadings, sort = T, cutoff = 0.4)
+```
+
+#### Diagramme
+
+```{r}
+fa.diagram(fit6, digits = 2)
+```
+
+
+### 7 Facteurs {.tabset}
+
+#### Modèle
+
+```{r}
+fit7 <- fa(dataComp, nfactors = 7, rotate = "oblimin", fm = "pa", use = "pairwise")
+
+print(fit7)
+
+```
+
+
+#### Loadings
+
+```{r}
+print(fit7$loadings, sort = T, cutoff = 0.4)
+```
+
+#### Diagramme
+
+```{r}
+fa.diagram(fit7, digits = 2)
+```
+
+
+
+
+
+## Fiabilité
+
+```{r}
+alpha(dataComp)
+```
+

@@ -21,6 +21,7 @@ library(factoextra) # Visualisation graphique de l'ACP
 library(gtsummary)  # Résumé descriptif des données
 library(corrplot)   # Corrélogrammes
 library(plotly)     # Graphes intéractifs
+library(EFAtools)
 ```
 
 
@@ -63,16 +64,6 @@ dataComp %>%
 Le manque de corrélations entre les variables peut déjà nous indiquer que l'ensemble des données ne pourra pas expliquer une grande partie de la variance. De plus, les dimensions de l'analyses ne pourront pas représenter les variables dans leur entièreté.
 
 
-
-```{r}
-dataComp %>%
-  select(where(is.numeric)) %>%
-  cor_mat() %>%
-  cor_plot(method = "square", type = "lower", insignificant = "blank")
-```
-
-
-
 # MFA
 
 
@@ -86,6 +77,18 @@ res.mfa <- MFA(dataComp,
 
 print(res.mfa)
 ```
+
+```{r}
+bartlett.test(dataComp %>% select(where(is.numeric)))
+```
+
+Le test de Bartlett étant significatif, nous pouvons assumer que les corrélations ne sont pas toutes nulles.
+
+
+```{r}
+KMO(dataComp %>% select(where(is.numeric)))
+```
+
 
 
 ## Valeurs propres
